@@ -4,13 +4,16 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace SuperHeroAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/super-heroes")]
     [ApiController]
     public class SuperHeroController : ControllerBase
     {
+        private readonly DataContext _context;
+
         private static readonly List<SuperHero> Heroes = new List<SuperHero>
         {
             new SuperHero
@@ -31,8 +34,19 @@ namespace SuperHeroAPI.Controllers
             }
         };
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<SuperHero>> Get(int id)
+        public SuperHeroController(DataContext context)
+        {
+            _context = context;
+        }
+        
+        [HttpGet("get-all-heroes", Name = "GetAllHeroes")]
+        public async Task<ActionResult<List<SuperHero>>> GetAllHeroes()
+        {
+            return Ok(await _context.SuperHeroes.ToListAsync());
+        }
+
+        [HttpGet("get-hero/{id}", Name = "GetHero")]
+        public async Task<ActionResult<SuperHero>> GetHero(int id)
         {
             var hero = Heroes.Find(h => h.Id == id);
 
@@ -43,21 +57,18 @@ namespace SuperHeroAPI.Controllers
             
             return Ok(hero);
         }
-        
-        [HttpGet]
-        public async Task<ActionResult<List<SuperHero>>> Get()
-        {
-            return Ok(Heroes);
-        }
 
-        [HttpPost]
+        [HttpPost("add-hero", Name = "AddHero")]
+        [SwaggerOperation(OperationId = "add-hero")]
+
         public async Task<ActionResult<List<SuperHero>>> AddHero(SuperHero hero)
         {
             Heroes.Add(hero);
             return Ok(Heroes);
         }
         
-        [HttpPut("{id}")]
+        [HttpPut("update-hero/{id}", Name = "UpdateHero")]
+        [SwaggerOperation(OperationId = "UpdateHero")]
         public async Task<ActionResult<SuperHero>> UpdateHero(int id, [FromBody] SuperHero request)
         {
             var hero = Heroes.Find(h => h.Id == id);
@@ -76,7 +87,7 @@ namespace SuperHeroAPI.Controllers
             return Ok(Heroes);
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("delete-hero/{id}", Name = "DeleteHero")]
         public async Task<ActionResult<SuperHero>> DeleteHero(int id, [FromBody] SuperHero request)
         {
             var hero = Heroes.Find(h => h.Id == id);
